@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Leaf Disease Detection</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>🌿 Leaf Disease Detection</h1>
+
+    <!-- Upload Form -->
+    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+      <div class="upload-card">
+        <label class="file-label">
+          <input type="file" name="file" accept="image/*" onchange="previewImage(event)" required>
+          <span>📷 Choose a Leaf Image</span>
+        </label>
+        <button type="submit">🔍 Predict</button>
+      </div>
+    </form>
+
+    <!-- Loader -->
+    <div id="loader" class="loader-container" style="display: none;">
+      <div class="loader"></div>
+      <p>Analyzing leaf...</p>
+    </div>
+
+    <!-- Image preview -->
+    <div class="preview" id="preview"></div>
+
+    <!-- Prediction result -->
+    {% if prediction %}
+      <div class="result {% if 'no disease' in prediction %}healthy{% else %}diseased{% endif %}">
+        <h2>{{ prediction }}</h2>
+        <p><b>Confidence:</b> {{ '%.2f'|format(confidence*100) }}%</p>
+        <p><b>Model Accuracy:</b> {{ '%.2f'|format(accuracy*100) }}%</p>
+        <p><b>Model Loss:</b> {{ '%.4f'|format(loss) }}</p>
+
+        <div class="uploaded-img">
+          <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded Leaf">
+        </div>
+        <button onclick="tryAnother()" class="try-btn">Try Another Image</button>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    // Loader
+    const form = document.getElementById("uploadForm");
+    const loader = document.getElementById("loader");
+    form.addEventListener("submit", () => {
+      loader.style.display = "block";
+    });
+
+    // Preview image before upload
+    function previewImage(event) {
+      const preview = document.getElementById("preview");
+      preview.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(event.target.files[0]);
+      img.style.maxWidth = "300px";
+      img.style.marginTop = "20px";
+      preview.appendChild(img);
+    }
+
+    // Try another image
+    function tryAnother() {
+      window.location.href = "/";
+    }
+  </script>
+</body>
+</html>
