@@ -14,6 +14,11 @@ app = Flask(__name__)
 # Load your trained model
 MODEL_PATH = "plant_disease_model.keras"
 model = tf.keras.models.load_model(MODEL_PATH)
+# Warm up model
+_ = model.predict(np.zeros((1, 224, 224, 3)))
+
+# Limit file size
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
 # Class labels (update based on your training classes)
 CLASS_NAMES = [
