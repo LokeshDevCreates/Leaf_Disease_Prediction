@@ -1,26 +1,28 @@
+import os
+# Force TensorFlow to use CPU only (saves memory on Render free tier)
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 from flask import Flask, render_template, request
 import tensorflow as tf
 import numpy as np
-import os
 from werkzeug.utils import secure_filename
 from tensorflow.keras.preprocessing import image
 import json
 
-# Load metrics once
+# Load metrics (accuracy & loss from evaluation)
 with open("metrics.json", "r") as f:
     METRICS = json.load(f)
+
 app = Flask(__name__)
 
 # Load your trained model
 MODEL_PATH = "plant_disease_model.keras"
 model = tf.keras.models.load_model(MODEL_PATH)
-# Warm up model
+
+# Warm up model (avoid first-request slowness)
 _ = model.predict(np.zeros((1, 224, 224, 3)))
 
-# Limit file size
-app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
-
-# Class labels (update based on your training classes)
+# Class labels (update to match your dataset)
 CLASS_NAMES = [
     "Apple___Apple_scab",
     "Apple___Black_rot",
@@ -49,7 +51,7 @@ CLASS_NAMES = [
     "Tomato___healthy"
 ]
 
-# Function to prettify class names
+# Function to make labels look nice
 def prettify_classname(classname):
     return classname.replace("___", " ").replace("_", " ")
 
@@ -57,12 +59,11 @@ def prettify_classname(classname):
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB limit
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    prediction_text = None
-    filename = None
-    confidence = None
+    prediction_text, filename, confidence = None, None, None
 
     if request.method == "POST":
         if "file" not in request.files:
@@ -89,7 +90,7 @@ def index():
 
             # Healthy vs Diseased
             if "healthy" in class_name.lower():
-                prediction_text = "✅ There is no disease in the leaf."
+                prediction_text = "✅ The leaf is healthy."
             else:
                 prediction_text = f"⚠️ The leaf has a disease: {pretty_name}"
 
